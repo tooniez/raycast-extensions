@@ -1,5 +1,9 @@
 # GitHub Copilot Changelog
 
+## [Additional instructions for issue assignment] - 2026-02-06
+
+- Add optional "Additional Instructions" field when assigning an issue to Copilot
+
 ## [Switch extension to use new API] - 2026-02-06
 
 - Switch "Create Task", "View Tasks" and "Menu Bar Tasks" commands to use new API
