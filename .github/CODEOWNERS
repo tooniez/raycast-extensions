@@ -1064,6 +1064,7 @@
 /extensions/jsr                                                     @j3lte @LitoMore
 /extensions/jsrepo                                                  @ieedan
 /extensions/juejin                                                  @AkaShark
+/extensions/jules-agents                                            @iHildy
 /extensions/jump                                                    @SKaplanOfficial @j3lte
 /extensions/jupiter-aggregator                                      @stevedylandev
 /extensions/jurassic-ninja-site-generator                           @keoshi
@@ -2533,7 +2534,7 @@
 /extensions/wireguard                                               @sbugzu @xmok
 /extensions/wise-accounts                                           @robsel118 @imvasen
 /extensions/wise-quotes                                             @HugoLiconV
-/extensions/wispr-flow-dictionary                                   
+/extensions/wispr-flow-dictionary                                   @cv087
 /extensions/wistia                                                  @ddoria921 @xmok
 /extensions/withings-sync                                           @thebruge
 /extensions/wiz-controller                                          @shailantani
