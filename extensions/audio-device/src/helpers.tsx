@@ -21,6 +21,8 @@ import {
   getOutputDevices,
   setDefaultInputDevice,
   TransportType,
+  isWindows,
+  getAudioAPI,
 } from "./audio-device";
 import { setOutputAndSystemDevice } from "./device-actions";
 import {
@@ -135,7 +137,7 @@ export function DeviceList({ ioType, deviceId, deviceName }: DeviceListProps) {
                   />
                 </ActionPanel>
               }
-              accessories={getAccessories(isCurrent, isHidden, shouldShowHidden)}
+              accessories={getAccessories(isCurrent, isHidden, shouldShowHidden, d)}
             />
           );
         })
@@ -164,6 +166,7 @@ function DeviceActions({
   return (
     <>
       <SetAudioDeviceAction device={device} type={ioType} onSelection={onSelection} />
+      {isWindows && <SetCommunicationDeviceAction device={device} type={ioType} onSelection={onSelection} />}
       <Action.CreateQuicklink
         quicklink={{
           name: `Set ${device.isOutput ? "Output" : "Input"} Device to ${device.name}`,
@@ -225,6 +228,35 @@ function SetAudioDeviceAction({ device, type, onSelection }: SetAudioDeviceActio
   );
 }
 
+function SetCommunicationDeviceAction({ device, type, onSelection }: SetAudioDeviceActionProps) {
+  return (
+    <Action
+      title={`Set as ${type === "input" ? "Input" : "Output"} Communication Device`}
+      icon={Icon.Phone}
+      shortcut={null}
+      onAction={async () => {
+        try {
+          const api = await getAudioAPI();
+          if (api.setDefaultCommunicationOutputDevice && api.setDefaultCommunicationInputDevice) {
+            if (type === "input") {
+              await api.setDefaultCommunicationInputDevice(device.id);
+            } else {
+              await api.setDefaultCommunicationOutputDevice(device.id);
+            }
+            onSelection?.();
+            closeMainWindow({ clearRootSearch: true });
+            popToRoot({ clearSearchBar: true });
+            showHUD(`Set "${device.name}" as ${type} communication device`);
+          }
+        } catch (e) {
+          console.log(e);
+          showToast(Toast.Style.Failure, `Failed setting "${device.name}" as ${type} communication device`);
+        }
+      }}
+    />
+  );
+}
+
 function ToggleHiddenDeviceAction({
   deviceId,
   ioType,
@@ -274,6 +306,8 @@ function ToggleShowHiddenDevicesAction({
 }
 
 function getDeviceIcon(device: AudioDevice): string | null {
+  const name = device.name.toLowerCase();
+
   // Check for AirPlay devices first
   if (device.transportType === TransportType.Airplay) {
     return "airplay.png";
@@ -281,7 +315,6 @@ function getDeviceIcon(device: AudioDevice): string | null {
 
   // Check if it's a Bluetooth device
   if (device.transportType === TransportType.Bluetooth || device.transportType === TransportType.BluetoothLowEnergy) {
-    const name = device.name.toLowerCase();
     if (name.includes("airpods max")) {
       return "airpods-max.png";
     } else if (name.includes("airpods pro")) {
@@ -293,14 +326,21 @@ function getDeviceIcon(device: AudioDevice): string | null {
     return "bluetooth-speaker.png";
   }
 
-  // Not AirPlay or Bluetooth
+  // Windows-specific transport types
+  if (isWindows && device.transportType) {
+    if (device.transportType === TransportType.Headphones || device.transportType === "headphones") {
+      return "bluetooth-speaker.png";
+    }
+  }
+
+  // Not a special device with custom icon
   return null;
 }
 
 export function getIcon(device: AudioDevice, isCurrent: boolean) {
   const deviceIcon = getDeviceIcon(device);
 
-  // If it's a special device (AirPods/AirPlay/Bluetooth), show its specific icon
+  // If it's a special device (AirPods/AirPlay/Bluetooth/Headphones), show its specific icon
   if (deviceIcon) {
     return {
       source: deviceIcon,
@@ -315,13 +355,56 @@ export function getIcon(device: AudioDevice, isCurrent: boolean) {
   };
 }
 
-function getAccessories(isCurrent: boolean, isHidden: boolean, shouldShowHidden: boolean) {
+function getAccessories(isCurrent: boolean, isHidden: boolean, shouldShowHidden: boolean, device?: AudioDevice) {
   const accessories: List.Item.Accessory[] = [];
+
   if (isCurrent) {
     accessories.push({ icon: Icon.Checkmark });
   }
+
   if (shouldShowHidden && isHidden) {
     accessories.push({ icon: Icon.EyeDisabled, tooltip: "Hidden" });
   }
+
+  if (isWindows && device?.isCommunication && !isCurrent) {
+    accessories.push({ icon: Icon.Phone, tooltip: "Communication Device" });
+  }
+
+  if (isWindows && device && !isCurrent) {
+    const deviceType = getSubtitle(device);
+    if (deviceType) {
+      accessories.push({ text: deviceType });
+    }
+  }
+
   return accessories;
+}
+
+function getSubtitle(device: AudioDevice) {
+  if (!device.transportType) {
+    return "";
+  }
+
+  if (isWindows) {
+    const typeLabels: Record<string, string> = {
+      hdmi: "HDMI Output",
+      displayport: "DisplayPort",
+      usb: "USB Audio",
+      bluetooth: "Bluetooth",
+      headphones: "Headphones",
+      headset: "Headset",
+      microphone: "Microphone",
+      mic: "Microphone",
+      speakers: "Speakers",
+      speaker: "Speakers",
+      spdif: "Digital (SPDIF/Optical)",
+      virtual: "Virtual Device",
+      builtin: "Built-in Audio",
+    };
+
+    const transportType = device.transportType.toLowerCase();
+    return typeLabels[transportType] || device.transportType.charAt(0).toUpperCase() + device.transportType.slice(1);
+  }
+
+  return Object.entries(TransportType).find(([, v]) => v === device.transportType)?.[0] || "";
 }
