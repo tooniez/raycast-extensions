@@ -1,4 +1,4 @@
-# CRUSH.md - Raycast YouTube Summarizer Extension
+# Raycast YouTube Summarizer Extension
 
 ## Build/Test/Lint Commands
 - `npm run build` - Build extension for production
