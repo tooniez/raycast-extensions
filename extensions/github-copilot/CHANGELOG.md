@@ -1,5 +1,9 @@
 # GitHub Copilot Changelog
 
+## [Premium requests on view tasks] - 2026-02-08
+
+- Add premium requests used to the "View Tasks" command
+
 ## [Fix titles and URLs for tasks without a pull request] - 2026-02-06
 
 - Fix titles and URLs for tasks without a pull request in "View Tasks" command
