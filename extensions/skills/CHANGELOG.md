@@ -1,5 +1,14 @@
 # Changelog
 
+## [Fix Skill Details] - 2026-02-11
+
+### Updates
+
+- Load SKILL.md files first, fallback to README.md
+- Add automatic caching with useCachedPromise
+- Improve loading performance with parallel fetch requests
+- Fix screen flickering when loading skill details
+
 ## [Fix Screenshots] - 2026-02-11
 
 ### Fixed
