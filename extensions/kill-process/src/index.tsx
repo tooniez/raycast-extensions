@@ -26,6 +26,8 @@ import { fetchProcessPerformance, fetchRunningProcesses } from "./utils/process"
 type SortBy = "cpu" | "memory";
 
 const APP_GROUPING_STORAGE_KEY = "kill-process.app-grouping-enabled";
+const SORT_BY_DROPDOWN_ID = "kill-process.sort-by";
+const DEFAULT_SORT_BY: SortBy = "cpu";
 
 const parseBooleanLike = (value: LocalStorage.Value | undefined): boolean | null => {
   if (value == null) {
@@ -40,17 +42,8 @@ const parseBooleanLike = (value: LocalStorage.Value | undefined): boolean | null
   return null;
 };
 
-const parseSortByPreference = (value: unknown): SortBy => {
-  // Backwards compatible:
-  // - old preference: boolean (true => memory, false => cpu)
-  // - new preference: dropdown string ("cpu" | "memory")
-  if (value === true || value === "memory") {
-    return "memory";
-  }
-  if (value === false || value === "cpu") {
-    return "cpu";
-  }
-  return "cpu";
+const isSortBy = (value: unknown): value is SortBy => {
+  return value === "cpu" || value === "memory";
 };
 
 export default function ProcessList() {
@@ -69,7 +62,7 @@ export default function ProcessList() {
   const clearSearchBarAfterKill = preferences.clearSearchBarAfterKill;
   const goToRootAfterKill = preferences.goToRootAfterKill;
   const skipConfirmation = preferences.skipConfirmation;
-  const [sortBy, setSortBy] = useState<SortBy>(parseSortByPreference(preferences.sortByMem));
+  const [sortBy, setSortBy] = useState<SortBy>(DEFAULT_SORT_BY);
   const [isAppGroupingEnabled, setIsAppGroupingEnabled] = useState<boolean>(false);
 
   // Cache CPU data from WMI queries (persists across refreshes)
@@ -348,10 +341,16 @@ export default function ProcessList() {
       onSearchTextChange={(query) => setQuery(query)}
       searchBarAccessory={
         <List.Dropdown
-          tooltip="Filter"
-          storeValue
-          defaultValue={sortBy}
-          onChange={(newValue) => setSortBy(newValue as SortBy)}
+          id={SORT_BY_DROPDOWN_ID}
+          tooltip="Sort"
+          storeValue={true}
+          defaultValue={DEFAULT_SORT_BY}
+          onChange={(newValue) => {
+            if (!isSortBy(newValue)) {
+              return;
+            }
+            setSortBy(newValue);
+          }}
         >
           <List.Dropdown.Section title="Sort By">
             <List.Dropdown.Item title="CPU Usage" value="cpu" />

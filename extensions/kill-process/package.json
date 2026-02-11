@@ -644,24 +644,6 @@
   },
   "preferences": [
     {
-      "description": "Default ordering for the process list.",
-      "name": "sortByMem",
-      "required": false,
-      "title": "Default Sort By",
-      "type": "dropdown",
-      "data": [
-        {
-          "title": "CPU",
-          "value": "cpu"
-        },
-        {
-          "title": "Memory",
-          "value": "memory"
-        }
-      ],
-      "default": "cpu"
-    },
-    {
       "description": "Refresh the list every N ms. Use 0 to disable. Minimum: 1000.",
       "label": "Interval (ms)",
       "name": "refreshDuration",
