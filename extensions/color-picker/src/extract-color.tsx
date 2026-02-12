@@ -1,6 +1,6 @@
 import { Action, ActionPanel, getSelectedFinderItems, Grid, Icon, showToast, Toast } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { extractColor } from "swift:../swift/extract-color";
+import { isMac } from "./lib/utils";
 
 type FinalColor = {
   hex: string;
@@ -44,20 +44,31 @@ export default function Command() {
     }
 
     if (path) {
-      extractColor(path, 40, false) // Set dominantOnly to true
-        .then((colors: FinalColor[]) => {
-          setColors(colors);
-          toast.style = Toast.Style.Success;
-          toast.title = "Colors extracted";
-          toast.message = `${colors.length} colors extracted from the image`;
-          setIsLoading(false);
-        })
-        .catch(() => {
-          setIsLoading(false);
-          toast.style = Toast.Style.Failure;
-          toast.title = "Error extracting colors";
-          toast.message = "Please select a valid image file";
-        });
+      let extractColor: (path: string, colorCount: number, dominantOnly: boolean) => Promise<FinalColor[]>;
+
+      if (isMac) {
+        const { extractColor: extractColorSwift } = await import("swift:../swift/extract-color");
+        extractColor = extractColorSwift;
+      } else {
+        const { extract_color: extractColorRust } = await import("rust:../rust/extract-color");
+        extractColor = extractColorRust;
+      }
+
+      try {
+        const colors = await extractColor(path, 40, false); // Set dominantOnly to true
+
+        setColors(colors);
+        toast.style = Toast.Style.Success;
+        toast.title = "Colors extracted";
+        toast.message = `${colors.length} colors extracted from the image`;
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error extracting colors:", error);
+        setIsLoading(false);
+        toast.style = Toast.Style.Failure;
+        toast.title = "Error extracting colors";
+        toast.message = "Please select a valid image file";
+      }
     } else {
       setIsLoading(false);
       setInfo({

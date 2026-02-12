@@ -5,6 +5,9 @@ import uniqBy from "lodash/uniqBy";
 import { HistoryColor, HistoryItem } from "./types";
 import { ColorFormatType } from "./types";
 
+export const isMac = process.platform === "darwin";
+export const isWindows = process.platform === "win32";
+
 const preferences = getPreferenceValues<ExtensionPreferences>();
 
 export function getFormattedColor(_color: HistoryColor, format?: ColorFormatType) {
