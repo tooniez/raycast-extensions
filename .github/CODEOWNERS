@@ -1685,7 +1685,7 @@
 /extensions/plexus                                                  @RensHoogendam @diegosreis
 /extensions/ploi                                                    @ploi-deploy @xmok
 /extensions/pm2                                                     @LitoMore @pernielsentikaer
-/extensions/pocket                                                  @vimtor @hrishabhn @xmok
+/extensions/pocket                                                  @vimtor @hrishabhn @xmok @pernielsentikaer
 /extensions/pocketbase                                              @xmok
 /extensions/podcasts                                                @ron-myers
 /extensions/podcasts-now                                            @cloudy9101
