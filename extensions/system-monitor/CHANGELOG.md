@@ -1,5 +1,9 @@
 # System Monitor Changelog
 
+## [Fix Temperature Polling] - 2026-03-04
+
+- Moved temperature sensor polling to a dedicated 3s interval to prevent stale readings
+
 ## [Added Menubar Pin-to-Display] - 2026-03-04
 
 - Click any stat in the menubar dropdown to pin it as persistent text next to the icon
