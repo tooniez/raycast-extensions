@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Color, Icon, Keyboard, List } from "@raycast/api";
-import { Skill, SkillFrontmatter, buildInstallCommand, formatInstalls } from "../shared";
+import { Skill, SkillFrontmatter, buildInstallCommand, formatInstalls, normalizeAllowedTools } from "../shared";
 import { useSkillContent } from "../hooks/useSkillContent";
 import { useRepoStats, RepoStats } from "../hooks/useRepoStats";
 import { InstallSkillAction } from "./actions/InstallSkillAction";
@@ -18,6 +18,7 @@ function InlineDetail({
   stats: RepoStats | undefined;
 }) {
   const installCommand = buildInstallCommand(skill);
+  const allowedTools = normalizeAllowedTools(frontmatter["allowed-tools"]);
 
   const markdown = isLoading
     ? `# ${skill.name}\n\nLoading...`
@@ -72,9 +73,9 @@ ${installCommand}
               icon={Icon.Checkmark}
             />
           )}
-          {frontmatter["allowed-tools"] && frontmatter["allowed-tools"].length > 0 && (
+          {allowedTools.length > 0 && (
             <List.Item.Detail.Metadata.TagList title="Allowed Tools">
-              {frontmatter["allowed-tools"].map((tool) => (
+              {allowedTools.map((tool: string) => (
                 <List.Item.Detail.Metadata.TagList.Item key={tool} text={tool} color={Color.Blue} />
               ))}
             </List.Item.Detail.Metadata.TagList>
