@@ -1,9 +1,28 @@
+import { platform as getOsPlatform, release as getOsRelease } from "node:os";
+import { environment } from "@raycast/api";
+
 export type Skill = {
   id: string;
   skillId: string;
   name: string;
   installs: number;
   source: string;
+};
+
+export type AuditProvider = "agent-trust-hub" | "socket" | "snyk";
+
+export type AuditStatus = "pass" | "warn" | "fail" | "unknown";
+
+export type SkillAudit = {
+  provider: AuditProvider;
+  status: AuditStatus;
+  url?: string;
+};
+
+export const AUDIT_PROVIDER_LABELS: Record<AuditProvider, string> = {
+  "agent-trust-hub": "Gen Agent Trust Hub",
+  socket: "Socket",
+  snyk: "Snyk",
 };
 
 export type SearchResponse = {
@@ -39,8 +58,10 @@ export function normalizeAllowedTools(tools: string | string[] | undefined): str
   return [tools];
 }
 
-export const API_BASE_URL = "https://skills.sh/api";
+export const SKILLS_BASE_URL = "https://skills.sh";
+export const API_BASE_URL = `${SKILLS_BASE_URL}/api`;
 const REPO_URL = "https://github.com/raycast/extensions";
+const ISSUE_TEMPLATE = "extension_bug_report.yml";
 
 export function parseFrontmatter(content: string): { frontmatter: SkillFrontmatter; body: string } {
   const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
@@ -124,13 +145,37 @@ export function deduplicateSkills(skills: Skill[]): Skill[] {
 }
 
 export function getOwner(skill: Skill): string {
-  return (skill.source ?? "").split("/")[0] || "unknown";
+  return skill.source.split("/")[0] || "unknown";
 }
 
-export function buildIssueUrl(endpoint: string, error: Error): string {
-  const title = encodeURIComponent(`[API Error] ${endpoint} request failed`);
-  const body = encodeURIComponent(
-    `## Error Details\n\n- **Endpoint:** \`${endpoint}\`\n- **Error:** ${error.message}\n- **Date:** ${new Date().toISOString()}\n`,
-  );
-  return `${REPO_URL}/issues/new?title=${title}&body=${body}`;
+export function buildGithubIssueUrl({
+  title,
+  description,
+  error,
+  reproductionSteps = [],
+}: {
+  title: string;
+  description: string;
+  error: Error;
+  reproductionSteps?: string[];
+}): string {
+  const issueTitle = title.startsWith("[Skills]") ? title : `[Skills] ${title}`;
+  const extensionUrl = `https://www.raycast.com/${environment.ownerOrAuthorName}/${environment.extensionName}`;
+  const repro = reproductionSteps.map((step, index) => `${index + 1}. ${step}`).join("\n");
+  const currentBehaviour = error.stack
+    ? [`Error: ${error.message}`, "", "```", error.stack, "```"].join("\n")
+    : `Error: ${error.message}`;
+  const query = new URLSearchParams({
+    template: ISSUE_TEMPLATE,
+    title: issueTitle,
+    "extension-url": extensionUrl,
+    "raycast-version": environment.raycastVersion,
+    "os-version": `${getOsPlatform()} ${getOsRelease()}`,
+    description,
+    repro,
+    "current-behaviour": currentBehaviour,
+    "expected-behaviour": "The action should complete without throwing an error.",
+  });
+
+  return `${REPO_URL}/issues/new?${query.toString()}`;
 }
