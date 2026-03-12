@@ -1,6 +1,10 @@
 # YouTube Thumbnail Grabber Changelog
 
-## [1.1.0] - 2026-03-12
+## [1.1.1] - 2026-03-12
+
+- Added thumbnail dimensions to list items
+
+## [1.1.0] - 2024-03-12
 
 ### Added
 
