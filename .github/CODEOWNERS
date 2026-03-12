@@ -980,7 +980,7 @@
 /extensions/html-colors                                             @comatory
 /extensions/http-mime                                               @Envl @pernielsentikaer
 /extensions/http-observatory                                        @j3lte
-/extensions/http-status-codes                                       @AlexVanderbist @pernielsentikaer @lucasmezencio
+/extensions/http-status-codes                                       @AlexVanderbist @PKlempe
 /extensions/http.cat                                                @lucasmezencio @AlexVanderbist
 /extensions/httpperf                                                @liluo @pernielsentikaer
 /extensions/hubspot                                                 @harisvsulaiman @pernielsentikaer @6farer @scoop @yuanminglee @j3lte @adityasarkar @xmok
