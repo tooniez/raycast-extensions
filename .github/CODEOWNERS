@@ -2231,6 +2231,7 @@
 /extensions/spring-initializr                                       @danvega
 /extensions/spryker-docs                                            @DinisEsteves
 /extensions/sql-format                                              @tonngw @jfkisafk @htyoung
+/extensions/sql-reference-search                                    @Faria22
 /extensions/squeeze                                                 @DanielAmCa
 /extensions/ssh-manager                                             @scopsy @LenoxFro @RtiM0 @shelken @emiara @ViGeng @alshchetinin @xmok
 /extensions/ssh-tunnel-manager                                      @MinatoHikari
