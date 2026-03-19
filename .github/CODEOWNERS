@@ -2203,6 +2203,7 @@
 /extensions/snake                                                   @tonka3000
 /extensions/snap-jot                                                @k41531 @longy2k
 /extensions/snapask                                                 @renzo4web
+/extensions/snapocr-via-paddle                                      @xwzhangSZU
 /extensions/sncftraintimes                                          @Pierrad
 /extensions/sniffer                                                 @Amr-Shams
 /extensions/snippetslab                                             @renfeisong
@@ -2674,6 +2675,7 @@
 /extensions/wol                                                     @bxb100 @sanjevirau
 /extensions/wolfram-alpha                                           @mathieudutour
 /extensions/word-count                                              @itsmingjie @koayon @chrismessina @LitoMore @aryan-thatte
+/extensions/word-research                                           @0xdhrv
 /extensions/word-search                                             @RishabSwift @thomaspaulmann @j3lte
 /extensions/word4you                                                @gnehz972
 /extensions/wordle                                                  @chrisalxlng
