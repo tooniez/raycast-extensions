@@ -1,5 +1,9 @@
 # GitHub Copilot Changelog
 
+## [Fix "Create Task" command error on successful creation] - 2026-03-20
+
+- Fix error when a task is created successfully with the "Create Task" command
+
 ## [View live agent logs] - 2026-03-17
 
 - Allow viewing the live agent logs for a task with the "View Tasks" command
