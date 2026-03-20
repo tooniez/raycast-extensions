@@ -1,5 +1,10 @@
 # Bitwarden Changelog
 
+## [Fix] - 2026-03-20
+
+- Fix custom server URL "Restart Required" alert loop after CLI binary update
+- Fix reverting to default server when custom server URL preference is removed
+
 ## [Unified Item Detail View] - 2026-03-20
 
 - Add unified detail screen for all vault item types (login, card, identity, note, SSH key)
