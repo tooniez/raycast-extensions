@@ -1020,6 +1020,7 @@
 /extensions/image-base64                                            @vitorLostadaC
 /extensions/image-diff-checker                                      @yasuhiro-yamamoto
 /extensions/image-flow                                              @godruoyi
+/extensions/image-hash-rename                                       @saury
 /extensions/image-host                                              @SuleymanEfe
 /extensions/image-search                                            @talhabalaj
 /extensions/image-shield                                            @tuki0918
