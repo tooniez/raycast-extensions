@@ -1,10 +1,4 @@
-import {
-  getConfig,
-  getConfiguredPlexampUrl,
-  registerConfigInvalidator,
-  requireServerConfig,
-  updateSavedServerConnection,
-} from "./plex-config";
+import { getConfig, getConfiguredPlexampUrl, registerConfigInvalidator, requireServerConfig } from "./plex-config";
 import {
   arrayify,
   asNumber,
@@ -20,7 +14,6 @@ import {
   requiredString,
   type XmlNode,
 } from "./plex-parsing";
-import { discoverPlexServers } from "./plex-auth";
 import { getTimelineServerBaseUrl, requestServer, requestServerWithConnection, requestXml } from "./plex-request";
 import type {
   AudioPlaylist,
@@ -105,7 +98,12 @@ function parseMusicSections(container: XmlNode): LibrarySection[] {
     }));
 }
 
-export async function getMusicSectionsForServer(server: PlexServerResource): Promise<LibrarySection[]> {
+export interface ServerSectionsResult {
+  libraries: LibrarySection[];
+  connectionUri: string;
+}
+
+export async function getMusicSectionsForServer(server: PlexServerResource): Promise<ServerSectionsResult> {
   const candidates =
     server.connections.length > 0 ? server.connections : server.preferredConnection ? [server.preferredConnection] : [];
 
@@ -113,75 +111,29 @@ export async function getMusicSectionsForServer(server: PlexServerResource): Pro
     throw new Error(`No usable connection was found for ${server.name}.`);
   }
 
-  const container = await Promise.any(
-    candidates.map((connection) =>
-      requestXml(connection.uri, "/library/sections", undefined, true, server.accessToken),
-    ),
+  const { container, uri } = await Promise.any(
+    candidates.map(async (connection) => {
+      const result = await requestXml(connection.uri, "/library/sections", undefined, true, server.accessToken);
+      return { container: result, uri: connection.uri };
+    }),
   );
 
-  return parseMusicSections(container);
+  return { libraries: parseMusicSections(container), connectionUri: uri };
 }
 
 export async function getMusicSections(): Promise<LibrarySection[]> {
   const config = await requireServerConfig();
 
-  const savedServer: PlexServerResource = {
+  const result = await getMusicSectionsForServer({
     name: config.serverName ?? "Plex Media Server",
     clientIdentifier: config.serverMachineIdentifier ?? config.plexServerUrl,
     accessToken: config.plexServerToken ?? config.plexToken,
     owned: true,
     connections: [{ uri: config.plexServerUrl }],
     preferredConnection: { uri: config.plexServerUrl },
-  };
+  });
 
-  try {
-    return await getMusicSectionsForServer(savedServer);
-  } catch (savedError) {
-    // Saved connection failed — attempt re-discovery via plex.tv
-    if (!config.serverMachineIdentifier) {
-      throw savedError;
-    }
-
-    let servers: PlexServerResource[];
-
-    try {
-      servers = await discoverPlexServers();
-    } catch {
-      throw savedError;
-    }
-
-    const server = servers.find((s) => s.clientIdentifier === config.serverMachineIdentifier);
-
-    if (!server || server.connections.length === 0) {
-      throw savedError;
-    }
-
-    // Try all discovered connections, tracking which one succeeds
-    const { sections, uri, accessToken } = await Promise.any(
-      server.connections.map(async (connection) => {
-        const container = await requestXml(
-          connection.uri,
-          "/library/sections",
-          undefined,
-          true,
-          server.accessToken ?? config.plexToken,
-        );
-
-        return {
-          sections: parseMusicSections(container),
-          uri: connection.uri,
-          accessToken: server.accessToken,
-        };
-      }),
-    );
-
-    // Update saved connection so subsequent requestServer calls use the working URL
-    if (uri !== config.plexServerUrl) {
-      await updateSavedServerConnection(uri, accessToken);
-    }
-
-    return sections;
-  }
+  return result.libraries;
 }
 
 export async function resolveSelectedLibrary(libraries: LibrarySection[]): Promise<LibrarySection | undefined> {

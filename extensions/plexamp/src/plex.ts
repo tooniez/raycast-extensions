@@ -6,7 +6,6 @@ export {
   saveManagedAuthToken,
   saveSelectedLibrary,
   saveSelectedServer,
-  updateSavedServerConnection,
 } from "./plex-config";
 export { checkPlexAuthPin, createPlexAuthPin, discoverPlexServers } from "./plex-auth";
 export {

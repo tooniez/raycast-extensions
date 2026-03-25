@@ -34,6 +34,7 @@ type SetupStage = "loading" | "auth" | "waiting-auth" | "library-selection" | "p
 interface ServerLibraries {
   server: PlexServerResource;
   libraries: LibrarySection[];
+  connectionUri: string;
 }
 
 interface PlexSetupViewProps {
@@ -119,9 +120,9 @@ export function PlexSetupView(props: PlexSetupViewProps) {
         await Promise.all(
           sortedServers.map(async (server, index) => {
             try {
-              const libraries = await getMusicSectionsForServer(server);
+              const { libraries, connectionUri } = await getMusicSectionsForServer(server);
               if (libraries.length > 0) {
-                results[index] = { server, libraries };
+                results[index] = { server, libraries, connectionUri };
                 setState((current) => ({
                   ...current,
                   isLoading: remaining > 1,
@@ -138,11 +139,11 @@ export function PlexSetupView(props: PlexSetupViewProps) {
 
         const serverLibraries = results.filter((r): r is ServerLibraries => r !== null);
         const selectableLibraries = serverLibraries.flatMap((entry) =>
-          entry.libraries.map((library) => ({ server: entry.server, library })),
+          entry.libraries.map((library) => ({ server: entry.server, library, connectionUri: entry.connectionUri })),
         );
 
         if (!props.forceLibrarySelection && selectableLibraries.length === 1) {
-          await saveSelectedServer(selectableLibraries[0].server);
+          await saveSelectedServer(selectableLibraries[0].server, selectableLibraries[0].connectionUri);
           await saveSelectedLibrary(selectableLibraries[0].library);
           await props.onConfigured?.();
           setState({
@@ -204,6 +205,7 @@ export function PlexSetupView(props: PlexSetupViewProps) {
                     connections: [],
                   },
                   libraries,
+                  connectionUri: "",
                 },
               ]
             : [],
@@ -343,7 +345,7 @@ export function PlexSetupView(props: PlexSetupViewProps) {
   }, [reload]);
 
   const chooseLibrary = useCallback(
-    async (library: LibrarySection, server?: PlexServerResource) => {
+    async (library: LibrarySection, server?: PlexServerResource, connectionUri?: string) => {
       const toast = await showToast({
         style: Toast.Style.Animated,
         title: `Saving ${library.title}...`,
@@ -351,7 +353,7 @@ export function PlexSetupView(props: PlexSetupViewProps) {
 
       try {
         if (server?.connections.length) {
-          await saveSelectedServer(server);
+          await saveSelectedServer(server, connectionUri);
         }
         await saveSelectedLibrary(library);
         toast.style = Toast.Style.Success;
@@ -394,8 +396,8 @@ export function PlexSetupView(props: PlexSetupViewProps) {
             }
           />
         ) : null}
-        {state.serverLibraries.map(({ server, libraries }) => (
-          <List.Section key={server.clientIdentifier} title={server.name} subtitle={server.preferredConnection?.uri}>
+        {state.serverLibraries.map(({ server, libraries, connectionUri }) => (
+          <List.Section key={server.clientIdentifier} title={server.name} subtitle={connectionUri}>
             {libraries.map((library) => (
               <List.Item
                 key={`${server.clientIdentifier}:${library.key}`}
@@ -419,7 +421,7 @@ export function PlexSetupView(props: PlexSetupViewProps) {
                     <Action
                       title="Use This Library"
                       icon={Icon.CheckCircle}
-                      onAction={() => void chooseLibrary(library, server)}
+                      onAction={() => void chooseLibrary(library, server, connectionUri)}
                     />
                     <Action title="Refresh Libraries" icon={Icon.ArrowClockwise} onAction={() => void reload()} />
                     <Action title="Reset Setup" icon={Icon.Trash} onAction={() => void resetSetup()} />
