@@ -1,0 +1,39 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "google-finance",
+  "title": "Google Finance",
+  "description": "Track stock prices powered by Google Finance",
+  "icon": "extension-icon.png",
+  "author": "kyle_samani",
+  "platforms": [
+    "macOS"
+  ],
+  "categories": [
+    "Finance"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "index",
+      "title": "View Stocks",
+      "description": "Look up stocks by symbol",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.11"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "@raycast/eslint-config": "^2.1.1",
+    "@types/node": "^25.5.0",
+    "eslint": "9.5.0"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "ray publish"
+  }
+}
