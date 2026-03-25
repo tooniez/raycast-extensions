@@ -1,41 +1,36 @@
-# Days 2 - Google Calendar Countdown
+# Days 2
 
-Countdown to all-day events from Google Calendar (birthdays, holidays, deadlines).
+Countdown to all-day events from Google Calendar — see how many days until your next birthday, holiday, deadline, or milestone.
+
+## Features
+
+- **Countdown to all-day events** — displays how many days remain until each upcoming all-day event from your Google Calendar
+- **Multiple display modes** — toggle between Days, Weeks + Days, and Months + Days with a single keypress (Enter). Smart toggle automatically skips irrelevant modes (e.g. no "weeks" for events less than 7 days away)
+- **Hero event** — the nearest upcoming event is highlighted at the top with a bold countdown
+- **Past event tracking** — search to find past events and see how many days ago they occurred (e.g. "3 days ago")
+- **Calendar filtering** — filter the list by calendar using a dropdown, or use the **Manage Calendars** command to select which calendars to display
+- **Event details** — view event descriptions, open events directly in Google Calendar
+- **Background refresh** — automatically updates a subtitle in Raycast root search showing the nearest event (e.g. "Birthday – 12 days"), refreshes every hour
+- **Dark mode support** — includes both light and dark mode icons
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| **Days 2** | Main view — countdown list of upcoming all-day events |
+| **Manage Calendars** | Select which Google Calendars to include |
+| **Days 2** (background) | Auto-updates nearest event subtitle in root search |
 
 ## Setup
 
-1. Create a Google Cloud project and enable the **Google Calendar API**.
-2. Configure OAuth consent screen (External) and add your account as a test user.
-3. Create an **iOS** OAuth Client ID with bundle ID `com.raycast`.
-4. In Raycast, open the extension preferences for this extension and paste the iOS Client ID into the "Client ID" field.
+1. Install the extension
+2. Open "Days 2" — you'll be prompted to sign in with Google
+3. Authorize read-only access to your calendars
+4. Done — your events appear instantly
 
-Notes:
+## Privacy
 
-- The extension uses the `calendar.readonly` scope.
-- The OAuth flow requires an iOS-type client ID with bundle ID `com.raycast` so Raycast can complete the redirect.
-
-## Usage
-
-- `days2` — Main command: shows next event, upcoming all-day events, and supports search.
-- `manage-calendars` — Toggle which calendars are displayed.
-- `background-refresh` — No-view command that updates the shortcut subtitle (runs every hour).
-
-## Troubleshooting
-
-- If events do not appear, check the extension preferences for a valid Client ID and ensure the Google Calendar API is enabled in your Google Cloud project.
-- The extension surfaces API failures via a Toast notification in the UI and logs details to the console for debugging.
-
-## Development
-
-Run locally with:
-
-```bash
-npm install
-npm run dev
-```
-
-Build with:
-
-```bash
-npm run build
-```
+- Read-only access (`calendar.readonly` scope)
+- All data processed locally on your device
+- No analytics, tracking, or data collection
+- [Privacy Policy](https://github.com/superment/days2-raycast/blob/main/PRIVACY.md)
