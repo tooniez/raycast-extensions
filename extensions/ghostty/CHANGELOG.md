@@ -1,5 +1,13 @@
 # Ghostty Changelog
 
+## [Edit Ghostty Config] - 2026-03-25
+
+- Add new command to view and edit the Ghostty configuration file (`~/.config/ghostty/config`)
+- Settings are grouped by category: Font, Colors, Cursor, Window, macOS, Mouse & Scroll, Clipboard, Shell, and more
+- Color values are rendered as live color swatches directly in the list
+- Edit any value inline with a form — enum options (like `cursor-style`, `window-theme`) use a dropdown
+- Browse all available Ghostty options and add missing ones directly to your config
+
 ## [Fix] - 2026-03-25
 
 - Fix "Open with Ghostty" to open the selected Finder item (file or folder), not just the current window directory
