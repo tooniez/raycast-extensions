@@ -2390,6 +2390,7 @@
 /extensions/tex2typst                                               @nac-39
 /extensions/text-decorator                                          @koinzhang @xmok
 /extensions/text-differ                                             @fishfisher
+/extensions/text-enhance                                            @maks1302
 /extensions/text-format-improver                                    @mrgeneralgoo
 /extensions/text-replacements                                       @thomaslombart
 /extensions/text-rewrap                                             @arembridge
