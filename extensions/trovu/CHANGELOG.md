@@ -1,5 +1,9 @@
 # Trovu Changelog
 
+## [1.3.1] - 2026-04-08
+
+- Minor code fixes.
+
 ## [1.3.0] - 2026-04-08
 
 - After submit, go directly to target URL, not via process script.
