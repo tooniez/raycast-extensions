@@ -1,82 +1,84 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getPreferenceValues } from "@raycast/api";
 import type { UsageState } from "../agents/types";
-import { KimiUsage, KimiError } from "./types";
+import { SyntheticUsage, SyntheticError } from "./types";
+import { resolveSyntheticToken } from "./auth";
 import { httpFetch } from "../agents/http";
-import { readOpencodeAuthToken } from "../agents/opencode-auth";
-import { isOpenCodeActiveToken } from "../agents/opencode-active";
 import { loadAccounts } from "../accounts/storage";
 import type { AccountUsageState } from "../accounts/types";
+import { readOpencodeAuthToken } from "../agents/opencode-auth";
+import { isOpenCodeActiveToken } from "../agents/opencode-active";
 
-const KIMI_OPENCODE_KEY = "kimi-for-coding";
+const SYNTHETIC_OPENCODE_KEY = "synthetic";
 
-const KIMI_USAGE_API = "https://api.kimi.com/coding/v1/usages";
+const SYNTHETIC_QUOTAS_API = "https://api.synthetic.new/v2/quotas";
 
 type AgentUsagePrefs = Preferences.AgentUsage;
 
-// --- API response interfaces ---
-
-interface KimiApiUsageDetail {
-  limit: number | string;
-  used: number | string;
-  remaining: number | string;
-  resetTime: string;
+interface QuotaBucketResponse {
+  limit?: number;
+  requests?: number;
+  renewsAt?: string;
 }
 
-interface KimiApiResponse {
-  usage?: KimiApiUsageDetail;
-  limits?: Array<{
-    window: { duration: number; timeUnit: string };
-    detail: KimiApiUsageDetail;
-  }>;
+interface SyntheticApiResponse {
+  subscription?: QuotaBucketResponse;
+  search?: {
+    hourly?: QuotaBucketResponse;
+  };
+  freeToolCalls?: QuotaBucketResponse;
 }
 
-// --- Helpers ---
-
-function toInt(value: number | string): number {
-  return typeof value === "number" ? value : parseInt(value, 10);
+function validateQuotaBucket(
+  bucket: QuotaBucketResponse | undefined,
+): bucket is { limit: number; requests: number; renewsAt: string } {
+  return (
+    !!bucket &&
+    typeof bucket.limit === "number" &&
+    typeof bucket.requests === "number" &&
+    typeof bucket.renewsAt === "string"
+  );
 }
 
-function toWindowMinutes(duration: number, timeUnit: string): number {
-  if (timeUnit === "TIME_UNIT_HOUR") return duration * 60;
-  if (timeUnit === "TIME_UNIT_DAY") return duration * 1440;
-  return duration; // TIME_UNIT_MINUTE or unknown
-}
-
-// --- Parser ---
-
-function parseKimiApiResponse(data: unknown): { usage: KimiUsage | null; error: KimiError | null } {
+function parseSyntheticResponse(data: unknown): { usage: SyntheticUsage | null; error: SyntheticError | null } {
   try {
     if (!data || typeof data !== "object") {
       return { usage: null, error: { type: "parse_error", message: "Invalid API response format" } };
     }
 
-    const response = data as KimiApiResponse;
+    const response = data as SyntheticApiResponse;
 
-    if (!response.usage) {
-      return { usage: null, error: { type: "parse_error", message: "No usage field in API response" } };
+    if (!validateQuotaBucket(response.subscription)) {
+      return {
+        usage: null,
+        error: { type: "parse_error", message: "Missing or invalid subscription data from Synthetic API" },
+      };
     }
 
-    const u = response.usage;
-    const firstLimit = response.limits?.[0];
+    if (!response.search?.hourly || !validateQuotaBucket(response.search.hourly)) {
+      return {
+        usage: null,
+        error: { type: "parse_error", message: "Missing or invalid search hourly data from Synthetic API" },
+      };
+    }
 
-    const usage: KimiUsage = {
-      limit: toInt(u.limit),
-      used: toInt(u.used),
-      remaining: toInt(u.remaining),
-      resetTime: u.resetTime,
-      rateLimit: firstLimit
-        ? {
-            windowMinutes: toWindowMinutes(firstLimit.window.duration, firstLimit.window.timeUnit),
-            limit: toInt(firstLimit.detail.limit),
-            used: toInt(firstLimit.detail.used),
-            remaining: toInt(firstLimit.detail.remaining),
-            resetTime: firstLimit.detail.resetTime,
-          }
-        : undefined,
+    if (!validateQuotaBucket(response.freeToolCalls)) {
+      return {
+        usage: null,
+        error: { type: "parse_error", message: "Missing or invalid free tool calls data from Synthetic API" },
+      };
+    }
+
+    return {
+      usage: {
+        subscription: response.subscription,
+        search: {
+          hourly: response.search.hourly,
+        },
+        freeToolCalls: response.freeToolCalls,
+      },
+      error: null,
     };
-
-    return { usage, error: null };
   } catch (err) {
     return {
       usage: null,
@@ -88,30 +90,22 @@ function parseKimiApiResponse(data: unknown): { usage: KimiUsage | null; error: 
   }
 }
 
-// --- Core fetcher ---
-
-async function fetchKimiUsage(token: string): Promise<{ usage: KimiUsage | null; error: KimiError | null }> {
+export async function fetchSyntheticUsage(
+  token: string,
+): Promise<{ usage: SyntheticUsage | null; error: SyntheticError | null }> {
   const { data, error } = await httpFetch({
-    url: KIMI_USAGE_API,
+    url: SYNTHETIC_QUOTAS_API,
     method: "GET",
     token,
     headers: { Accept: "application/json" },
   });
   if (error) return { usage: null, error };
-  return parseKimiApiResponse(data);
+  return parseSyntheticResponse(data);
 }
 
-function resolveKimiTokens(prefs: AgentUsagePrefs): string {
-  // Slot 1: manual preference → OpenCode auto-detect
-  const pref1 = (prefs.kimiAuthToken as string | undefined)?.trim() || "";
-  return pref1 || readOpencodeAuthToken("kimi-for-coding") || "";
-}
-
-// --- Dual-source auth hook ---
-
-export function useKimiUsage(enabled = true): UsageState<KimiUsage, KimiError> {
-  const [usage, setUsage] = useState<KimiUsage | null>(null);
-  const [error, setError] = useState<KimiError | null>(null);
+export function useSyntheticUsage(enabled = true): UsageState<SyntheticUsage, SyntheticError> {
+  const [usage, setUsage] = useState<SyntheticUsage | null>(null);
+  const [error, setError] = useState<SyntheticError | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasInitialFetch, setHasInitialFetch] = useState<boolean>(false);
   const requestIdRef = useRef(0);
@@ -120,13 +114,13 @@ export function useKimiUsage(enabled = true): UsageState<KimiUsage, KimiError> {
     const requestId = ++requestIdRef.current;
 
     const prefs = getPreferenceValues<AgentUsagePrefs>();
-    const token = resolveKimiTokens(prefs);
+    const token = resolveSyntheticToken((prefs.syntheticApiToken as string | undefined)?.trim() || "");
 
     if (!token) {
       setUsage(null);
       setError({
         type: "not_configured",
-        message: "Kimi token not found. Login via OpenCode (kimi-for-coding) or add it in extension settings (Cmd+,).",
+        message: "Synthetic token not found. Login via OpenCode (synthetic) or add it in extension settings (Cmd+,).",
       });
       setIsLoading(false);
       setHasInitialFetch(true);
@@ -136,7 +130,7 @@ export function useKimiUsage(enabled = true): UsageState<KimiUsage, KimiError> {
     setIsLoading(true);
     setError(null);
 
-    const result = await fetchKimiUsage(token);
+    const result = await fetchSyntheticUsage(token);
     if (requestId !== requestIdRef.current) return;
 
     setUsage(result.usage);
@@ -171,48 +165,44 @@ export function useKimiUsage(enabled = true): UsageState<KimiUsage, KimiError> {
 }
 
 /**
- * Returns one UsageState per named Kimi account stored in LocalStorage.
+ * Returns one UsageState per named Synthetic account stored in LocalStorage.
  * Falls back to the preference/OpenCode token if no accounts are stored.
  *
  * Each entry in the returned array corresponds to one account.
  * The array is stable in order (matches LocalStorage order).
  */
-export function useKimiAccounts(enabled = true): AccountUsageState<KimiUsage, KimiError>[] {
-  // We store per-account state in parallel arrays indexed by accountId.
-  // Because hooks can't be called in loops, we fetch all accounts up front
-  // and manage state as a single Record keyed by accountId.
-
-  const [accountStates, setAccountStates] = useState<AccountUsageState<KimiUsage, KimiError>[]>([]);
+export function useSyntheticAccounts(enabled = true): AccountUsageState<SyntheticUsage, SyntheticError>[] {
+  const [accountStates, setAccountStates] = useState<AccountUsageState<SyntheticUsage, SyntheticError>[]>([]);
   const requestIdRef = useRef(0);
 
   const fetchAll = useCallback(async () => {
     const requestId = ++requestIdRef.current;
 
     const prefs = getPreferenceValues<AgentUsagePrefs>();
-    const manualAccounts = await loadAccounts("kimi");
+    const manualAccounts = await loadAccounts("synthetic");
 
-    // Get auto-detected token from OpenCode
-    const autoToken = readOpencodeAuthToken("kimi-for-coding");
-    const prefToken = (prefs.kimiAuthToken as string | undefined)?.trim() || "";
+    // Get tokens from different sources
+    const preferenceToken = (prefs.syntheticApiToken as string | undefined)?.trim() || "";
+    const opencodeToken = readOpencodeAuthToken("synthetic");
 
     // Build list of all accounts: manual + auto-detected (if not duplicate)
     const accounts = [...manualAccounts];
 
     // Add preference token as "Manual" if different from manual accounts
-    if (prefToken && !accounts.some((a) => a.token === prefToken)) {
+    if (preferenceToken && !accounts.some((a) => a.token === preferenceToken)) {
       accounts.push({
-        id: "kimi-pref",
+        id: "synthetic-pref",
         label: "Manual",
-        token: prefToken,
+        token: preferenceToken,
       });
     }
 
-    // Add auto-detected token as "Auto-detected" if different from existing
-    if (autoToken && !accounts.some((a) => a.token === autoToken)) {
+    // Add OpenCode token as "Auto-detected" if different from existing
+    if (opencodeToken && !accounts.some((a) => a.token === opencodeToken)) {
       accounts.push({
-        id: "kimi-opencode",
+        id: "synthetic-opencode",
         label: "Auto-detected",
-        token: autoToken,
+        token: opencodeToken,
       });
     }
 
@@ -227,8 +217,7 @@ export function useKimiAccounts(enabled = true): AccountUsageState<KimiUsage, Ki
           usage: null,
           error: {
             type: "not_configured",
-            message:
-              "Kimi token not found. Login via OpenCode (kimi-for-coding) or add an account via Manage Accounts.",
+            message: "Synthetic token not found. Login via OpenCode (synthetic) or add an account via Manage Accounts.",
           },
           revalidate: async () => {
             await fetchAll();
@@ -241,7 +230,7 @@ export function useKimiAccounts(enabled = true): AccountUsageState<KimiUsage, Ki
     // Kick off all fetches in parallel
     const results = await Promise.all(
       accounts.map(async (account) => {
-        const result = await fetchKimiUsage(account.token);
+        const result = await fetchSyntheticUsage(account.token);
         return { account, result };
       }),
     );
@@ -256,7 +245,7 @@ export function useKimiAccounts(enabled = true): AccountUsageState<KimiUsage, Ki
         isLoading: false,
         usage: result.usage,
         error: result.error,
-        isOpenCodeActive: isOpenCodeActiveToken(account.token, KIMI_OPENCODE_KEY),
+        isOpenCodeActive: isOpenCodeActiveToken(account.token, SYNTHETIC_OPENCODE_KEY),
         revalidate: async () => {
           await fetchAll();
         },
