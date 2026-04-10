@@ -363,6 +363,7 @@
 /extensions/cloudflare-email-routing                                @erayack @xmok @parterburn
 /extensions/cloudflare-warp                                         @anandubajith @ezzylan
 /extensions/cloudinary                                              @colbyfayock @xmok
+/extensions/cmux                                                    @stevenocchipinti
 /extensions/cnpj-lookup                                             @xilopaint
 /extensions/cobalt                                                  @aelew @aelew
 /extensions/cocktail-db                                             @xmok
