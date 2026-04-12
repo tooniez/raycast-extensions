@@ -1,5 +1,9 @@
 # Agent Usage Changelog
 
+## [Add Windows Support] - 2026-04-12
+
+- Add Windows support
+
 ## [Support Droid Encrypted Auth v2] - 2026-04-12
 
 ### Improvements
