@@ -922,6 +922,7 @@
   "bake/gopass": "gopass",
   "Lemon/gotify": "gotify",
   "j3lte/govee": "govee",
+  "kazzart/gpu-fleet-monitor": "gpu-fleet-monitor",
   "smcnab1/gradient-generator": "gradient-generator",
   "alex-w0/gradle-plugins": "gradle-plugins",
   "Francois/grafana": "grafana",
