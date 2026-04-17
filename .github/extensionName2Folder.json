@@ -367,6 +367,7 @@
   "erayack/cloudflare-email-routing": "cloudflare-email-routing",
   "anandubajith/cloudflare-warp": "cloudflare-warp",
   "colbyfayock/cloudinary": "cloudinary",
+  "birdie/cloudstash": "cloudstash",
   "steve_occhipinti/cmux": "cmux",
   "xilopaint/cnpj-lookup": "cnpj-lookup",
   "aelew/cobalt": "cobalt",
