@@ -1,5 +1,10 @@
 # Changelog
 
+## [Store Copy Refresh] - 2026-04-22
+
+- Refine the Raycast Store description and README copy.
+- Clarify the extension's purpose and key features.
+
 ## [Initial Release] - 2026-04-22
 
 - Extract a Notion page ID from the focused browser tab or clipboard.

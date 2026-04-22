@@ -1,6 +1,6 @@
 # Notion URL to ID
 
-A Raycast extension to extract a Notion page or database ID from the focused browser tab or clipboard, then save recent IDs for quick reuse.
+Extract, save, and organize Notion page and database IDs directly from Raycast. It is useful when you need raw Notion IDs for automations, API calls, formulas, embeds, filters, or internal tools without digging through links manually.
 
 Built by Sam Dsgn.
 
@@ -8,31 +8,22 @@ Built by Sam Dsgn.
 - Tool page: https://samdsgn.studio/notion-id-extractor
 - Source code: https://github.com/samdsgn-studio/raycast-notion-id-extractor
 
+## Features
+
+- Extract Notion page and database IDs from the focused browser tab or clipboard
+- Support classic Notion URLs plus IDs passed through query parameters
+- Save copied IDs locally for quick reuse inside Raycast
+- Search and recopy saved IDs from a dedicated history command
+- Pin important IDs to the top of the list
+- Rename saved entries so they stay readable
+- Organize saved IDs into folders
+- Open the original Notion URL when available
+- Use supported browsers and Notion desktop window titles to improve saved names
+
 ## Commands
 
-### Extract Notion ID
-
-Runs as a no-view command and uses this order:
-
-1. Check the focused browser tab for a Notion URL.
-2. If no focused Notion page is available, fall back to the clipboard.
-3. Copy the normalized ID to the clipboard.
-4. Save the page name, ID, source URL, and last copied timestamp into local Raycast history.
-
-### Search Notion IDs
-
-Opens a searchable list of copied IDs stored in Raycast local storage. Each item shows:
-
-- page name
-- Notion ID
-- last copied date
-- pin state
-
-Each item exposes actions to:
-
-- copy the Notion ID
-- pin or unpin the item
-- open the source Notion URL when available
+- `Extract Notion ID`: check the focused browser tab first, then fall back to the clipboard
+- `Search Notion IDs`: browse, organize, and reuse saved IDs
 
 ## Browser Support
 
