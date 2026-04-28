@@ -1,5 +1,9 @@
 # Skills Changelog
 
+## [Add bunx support] - 2026-04-28
+
+- Added initial support for `bunx`, it is only called optimally if `npx` is not found
+
 ## [Add Skills CLI Telemetry Opt-Out] - 2026-04-28
 
 - Add an extension preference to opt out of anonymous usage telemetry collected by the underlying Skills CLI when commands are run from Raycast
