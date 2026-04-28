@@ -1,5 +1,8 @@
 # Brightness Control Changelog
 
+## [Update] - 2026-04-28
+- Add windows support
+- Update packages
 ## [Fix Brightness Up/Down hotkey bug] - 2026-04-15
 
 - Fixed "Brightness Up" and "Brightness Down" silently failing when triggered via a hotkey ([raycast/extensions#27085](https://github.com/raycast/extensions/issues/27085)). The commands now use Lunar's relative brightness CLI (`displays <serial> brightness +/-N`) instead of synthesizing brightness key codes via AppleScript, so held hotkey modifiers no longer suppress the adjustment.
