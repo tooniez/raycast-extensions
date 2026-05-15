@@ -1,4 +1,4 @@
-import { compactSearchResults, searchHighlights } from "../exa";
+import { compactSearchResults, searchDeepReasoning } from "../exa";
 
 type Input = {
   /**
@@ -24,7 +24,7 @@ type Input = {
 };
 
 /**
- * @returns Compact search results with highlights and published dates when available.
+ * @returns Deep-reasoning search results with highlights and published dates when available.
  */
 export default async function (input: Input) {
   const splitDomains = (domains?: string) =>
@@ -55,7 +55,7 @@ export default async function (input: Input) {
             excludeDomains: splitDomains(input.excludeDomains),
           };
 
-  return compactSearchResults(await searchHighlights(normalizedInput)).map((result) => ({
+  return compactSearchResults(await searchDeepReasoning(normalizedInput)).map((result) => ({
     title: result.title,
     url: result.url,
     highlights: result.highlights,
