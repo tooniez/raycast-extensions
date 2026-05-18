@@ -1,5 +1,12 @@
 # GitLab Changelog
 
+## [Pipeline triggers, My Pipelines & Job controls] - 2026-05-18
+
+- Add top-level `My Pipelines` command listing your recent pipelines across projects
+- Add `Trigger New Pipeline` action with branch/tag selection and CI/CD variables
+- Add `Play Job` action for manual jobs and `Cancel Job` action for running jobs
+- Add `Show Log` action to view a job's trace inside Raycast
+
 ## [Fix OOM crash in My Projects for large GitLab instances] - 2026-05-16
 
 - Fix out-of-memory crash when fetching thousands of projects by using parallel batch fetching with per-page mapping
