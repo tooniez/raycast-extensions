@@ -1,5 +1,9 @@
 # GitLab Changelog
 
+## [Keep cached merge requests interactive] - 2026-05-18
+
+- Keep cached list results actionable while stale data refreshes in the background
+
 ## [Pipeline triggers, My Pipelines & Job controls] - 2026-05-18
 
 - Add top-level `My Pipelines` command listing your recent pipelines across projects
