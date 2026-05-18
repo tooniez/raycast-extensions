@@ -1,5 +1,10 @@
 # Todoist Changelog
 
+## [Menu bar priority sorting] - 2026-05-18
+
+- **Sort menu bar tasks by priority**: Tasks shown in the menu bar (Today, Upcoming, Inbox, and Filter views) are now ordered by priority first (highest first), then by their existing default order, so the most important tasks surface at the top.
+- **Toggle from preferences**: A new **Sort tasks by priority** checkbox in the menu bar command preferences lets you turn priority sorting off and fall back to the previous default ordering. Enabled by default.
+
 ## [Add Keyboard Shortcuts] - 2026-05-16
 
 - Added a shortcut to create Raycast quicklinks from Todoist views.
