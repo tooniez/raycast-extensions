@@ -376,6 +376,18 @@ export function isValidStatus(status: Status): boolean {
   return false;
 }
 
+/**
+ * Returns true when the request body can be safely replayed after a 401.
+ * Streams and FormData are consumed by the first send and cannot be reused.
+ */
+function isReplayableBody(body: unknown): boolean {
+  if (body == null) return true;
+  const b = body as { pipe?: unknown; read?: unknown; getBuffer?: unknown; getBoundary?: unknown };
+  if (typeof b.pipe === "function" || typeof b.read === "function") return false;
+  if (typeof b.getBuffer === "function" && typeof b.getBoundary === "function") return false;
+  return true;
+}
+
 async function toJsonOrError(response: Response): Promise<any> {
   const s = response.status;
   logAPI(`status code: ${s}`);
@@ -405,27 +417,65 @@ async function toJsonOrError(response: Response): Promise<any> {
   }
 }
 
+type AuthType = "pat" | "oauth";
+type TokenResolver = () => Promise<string>;
+export interface AuthConfig {
+  authType: AuthType;
+  resolve: TokenResolver;
+  /** Force-refresh the token after a 401. Only consulted when `authType === "oauth"`. */
+  refresh?: () => Promise<string>;
+}
+
 export class GitLab {
-  public token: string;
-  private url: string;
-  constructor(url: string, token: string) {
-    this.token = token;
+  private readonly url: string;
+  private readonly auth: AuthConfig;
+
+  constructor(url: string, auth: string | AuthConfig) {
     this.url = url;
+    this.auth = typeof auth === "string" ? { authType: "pat", resolve: async () => auth } : auth;
+  }
+
+  private buildAuthHeaders(token: string): Record<string, string> {
+    return this.auth.authType === "oauth" ? { Authorization: `Bearer ${token}` } : { "PRIVATE-TOKEN": token };
+  }
+
+  private async resolveToken(force = false): Promise<string> {
+    return force && this.auth.refresh ? this.auth.refresh() : this.auth.resolve();
   }
 
   private getFetcher() {
     return async (...args: Parameters<typeof fetch>) => {
       const [fullUrl, options] = args;
       const agent = getHttpAgent();
+      const send = async (token: string) =>
+        fetch(fullUrl, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            ...(options?.headers ?? {}),
+            ...this.buildAuthHeaders(token),
+          },
+          agent,
+        });
 
-      return await fetch(fullUrl, {
-        headers: {
-          "Content-Type": "application/json",
-          "PRIVATE-TOKEN": this.token,
-        },
-        agent: agent,
-        ...options,
-      });
+      const response = await send(await this.resolveToken());
+
+      // On OAuth 401, force-refresh once and retry. Skip the retry for
+      // non-replayable bodies (streams, FormData) since they were consumed.
+      if (
+        response.status === 401 &&
+        this.auth.authType === "oauth" &&
+        this.auth.refresh &&
+        isReplayableBody(options?.body)
+      ) {
+        try {
+          const fresh = await this.resolveToken(true);
+          return await send(fresh);
+        } catch {
+          return response;
+        }
+      }
+      return response;
     };
   }
 
