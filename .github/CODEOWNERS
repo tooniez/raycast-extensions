@@ -1103,7 +1103,6 @@
 /extensions/image-wallet                                            @ibll @hetommy
 /extensions/imagekit-uploader                                       @ludafa
 /extensions/imageoptim                                              @marckohlbrugge
-/extensions/images-compression                                      @okooo5km
 /extensions/imdb                                                    @ryan-exe @kgrhartlage @bibixx @dnsv @owain-williams @xmok
 /extensions/imessage-2fa                                            @yuercl @thomaspaulmann @arronhunt @ronaldheft @hitolaus @taschaub @omaerkhan @clins1994
 /extensions/imgur                                                   @BalliAsghar @pernielsentikaer @caumeira @j3lte
@@ -2932,6 +2931,7 @@
 /extensions/zerodha-portfolio-kite-coin                             @SandeepBaskaran
 /extensions/zerossl                                                 @xmok
 /extensions/zipcodebase                                             @xmok
+/extensions/zipic                                                   @okooo5km
 /extensions/zipline                                                 @treyg
 /extensions/zipper-run                                              @arielconti10 @pernielsentikaer
 /extensions/znotch                                                  @zkondor
