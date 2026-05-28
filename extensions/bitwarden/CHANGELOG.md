@@ -1,5 +1,9 @@
 # Bitwarden Changelog
 
+## [Fix sync session handling] - 2026-05-28
+
+- Fixed failed sync attempts immediately clearing the active session before cached vault data can load.
+
 ## [CLI update] - 2026-05-27
 
 - Update CLI to v2026.4.2
