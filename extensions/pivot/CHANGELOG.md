@@ -1,5 +1,9 @@
 # Pivot Changelog
 
+## [Fix Preset Editor Memory Usage] - 2026-06-02
+
+- Fixed a memory spike that could crash Raycast when editing presets with many discovered extensions.
+
 ## [Initial Version] - 2026-06-01
 
 - Pivot Apps — bulk-rebind the default macOS app for any set of file extensions in one confirmation.
