@@ -1,5 +1,16 @@
 # Token Track Changelog
 
+## [Budget Menu Bar] - 2026-06-07
+
+- Add **Budget Menu Bar** command: glanceable spend vs cap for Claude Code, Codex, and Cursor with provider-colored progress bars.
+- Opt-in command (`disabledByDefault`); run it once from Raycast to pin the menu bar item. Background refresh every 15 minutes (enable in command preferences).
+
+## [Claude Code chat titles and Open Chat] - 2026-06-07
+
+- Fix Claude Code conversation names to match the app sidebar: prefer `/rename` custom titles, then `ai-title` lines from session JSONL.
+- Attribute subagent and forked-session usage to the parent chat so View Details totals match the dashboard.
+- Fix **Open Chat** to resume the session via `claude://resume?session={uuid}&cwd={path}` (falls back to `claude://code/{uuid}`).
+
 ## [Quick usage commands] - 2026-06-06
 
 - Add **Quick Usage Claude Code**, **Quick Usage Codex**, and **Quick Usage Cursor** no-view commands that show a toast with estimated spend against your configured budget cap.
@@ -21,11 +32,6 @@
 - Extend the budget detail panel with pace metadata (daily burn, daily allowance, projection).
 
 ## [Major dashboard update] - 2026-06-06
-
-![Codex week usage and token chart](metadata/tokentrack-1.png)
-![Codex month usage and token chart](metadata/tokentrack-2.png)
-![Cursor monthly budget progress](metadata/tokentrack-3.png)
-![Cursor conversation details](metadata/tokentrack-4.png)
 
 - Rework dashboard around **Week** and **Month** calendar periods (Sunday → today, 1st → today); removed the Today row.
 - Add a dedicated **Budget** row with native monthly caps (Claude, Cursor) or a **rolling 7-day Codex window** (first-use anchored, matching Codex CLI) and an SVG progress bar in the detail panel.
