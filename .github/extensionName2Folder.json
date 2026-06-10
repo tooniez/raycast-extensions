@@ -389,6 +389,7 @@
   "destiner/cloudflare": "cloudflare",
   "dharmin_nagar/cloudflare-ai": "cloudflare-ai",
   "erayack/cloudflare-email-routing": "cloudflare-email-routing",
+  "miguel_caetano_dias/cloudflare-images": "cloudflare-images",
   "anandubajith/cloudflare-warp": "cloudflare-warp",
   "colbyfayock/cloudinary": "cloudinary",
   "birdie/cloudstash": "cloudstash",
