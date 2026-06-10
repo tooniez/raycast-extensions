@@ -1,5 +1,9 @@
 # Mail Changelog
 
+## [Improvement] - 2026-06-10
+
+- Add option to manually set the type of a mailbox (inbox, junk, etc.), useful for non-English mail accounts
+
 ## [Add AI Tools] - 2026-06-05
 
 - Add new AI tool `move-to-trash` to move one or more Apple Mail emails to Trash.
