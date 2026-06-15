@@ -12,13 +12,3 @@ compiled_raycast_rust
 
 # misc
 .DS_Store
-dist
-bin
-test-audio.ts
-test-*.js
-test-*.scpt
-test-*.applescript
-debug-*.scpt
-test-*.ts
-AUDIO_*.md
-FINDINGS.md
