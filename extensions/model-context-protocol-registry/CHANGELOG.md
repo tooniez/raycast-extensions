@@ -1,5 +1,9 @@
 # Model Context Protocol Registry Changelog
 
+## [Add Olostep MCP Server] - 2026-06-16
+
+Add official Olostep MCP Server to registry for web data access — search, scrape, crawl, batch processing, and cited AI answers.
+
 ## [Add OptionsAhoy MCP Server] - 2026-06-16
 
 Add community OptionsAhoy MCP Server to registry for equity-compensation tax optimization (ISO/AMT scheduling, NSO, RSU sell-vs-hold, QSBS eligibility, concentration risk, protective puts/collars) across federal plus 50-state and DC tax code. Remote endpoint via mcp-remote, no API key required.
