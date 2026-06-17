@@ -1,5 +1,9 @@
 # Visual Studio Code Changelog
 
+## [Update] - 2026-06-17
+
+- Added support for Devin Desktop.
+
 ## [Fix: Windows project opening] - 2026-06-17
 
 - Fixed Windows project opening so recent projects are launched through the selected editor URL handler instead of Explorer.
