@@ -1,4 +1,5 @@
 import { getDay } from "../lib/cache";
+import { assertAiAccess } from "../lib/ai-access";
 import { today, formatMetricValue } from "../lib/format";
 import { METRIC_LABELS, MetricName } from "../lib/types";
 
@@ -38,10 +39,9 @@ type Input = {
  * Use when the user asks about one specific metric like "what was my HRV on Monday".
  */
 export default async function tool(input: Input) {
+  assertAiAccess();
   if (!VALID_METRICS.includes(input.metric)) {
-    throw new Error(
-      `Unknown metric: "${input.metric}". Valid metrics: ${VALID_METRICS.join(", ")}`,
-    );
+    throw new Error(`Unknown metric: "${input.metric}". Valid metrics: ${VALID_METRICS.join(", ")}`);
   }
   const date = input.date ?? today();
   const { data, stale } = await getDay(date);
@@ -54,10 +54,7 @@ export default async function tool(input: Input) {
     metric: input.metric,
     label: METRIC_LABELS[input.metric] ?? input.metric,
     value: numericValue,
-    formatted_value:
-      numericValue != null
-        ? formatMetricValue(input.metric, numericValue)
-        : "—",
+    formatted_value: numericValue != null ? formatMetricValue(input.metric, numericValue) : "—",
     available: value != null,
   };
 }

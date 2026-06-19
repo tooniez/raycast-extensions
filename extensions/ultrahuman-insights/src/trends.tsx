@@ -1,30 +1,14 @@
-import {
-  List,
-  ActionPanel,
-  Action,
-  Icon,
-  openExtensionPreferences,
-} from "@raycast/api";
-import { useCallback, useMemo } from "react";
-import { getRange, clearRange } from "./lib/cache";
-import { DailyMetricsRange, METRIC_LABELS, MetricName } from "./lib/types";
-import {
-  formatMetricValue,
-  lastNDaysEpoch,
-  sparkline,
-  todayDateKey,
-} from "./lib/format";
-import { useMetrics } from "./lib/use-metrics";
-import { insightFor, deltaVsAverage, Insight } from "./lib/insights";
+import { List, Icon } from "@raycast/api";
+import { METRIC_LABELS, MetricName } from "./lib/types";
+import { formatMetricValue, sparkline } from "./lib/format";
+import { insightFor, deltaVsAverage, appendInsightLines, Insight } from "./lib/insights";
 import { metricIcon } from "./lib/icons";
-import { lineChart, colorToHex } from "./lib/charts";
+import { appendSeriesChart } from "./lib/charts";
 import { ListStatus } from "./lib/status-view";
+import { useDailyRange } from "./lib/use-daily-range";
+import { MetricActions } from "./lib/metric-actions";
 
-function trendSummary(
-  metric: MetricName,
-  values: Array<number | undefined>,
-  todayValue: number | undefined,
-): string {
+function trendSummary(metric: MetricName, values: Array<number | undefined>, todayValue: number | undefined): string {
   const delta = deltaVsAverage(todayValue, values, values.length - 1);
   if (!delta) return "";
   const { pct } = delta;
@@ -47,35 +31,11 @@ function trendMarkdown(
   lines.push("");
 
   if (insight.status !== "neutral" && insight.context) {
-    const statusLine = insight.label
-      ? `**${insight.label}** — ${insight.context}`
-      : insight.context;
-    lines.push(statusLine);
+    appendInsightLines(lines, insight);
     lines.push("");
   }
 
-  const validCount = values.filter((v) => v != null).length;
-  if (validCount >= 3) {
-    const hexColor = colorToHex(insight.color);
-    const shortLabels = dates.map((d) => {
-      if (!d) return "";
-      const date = new Date(d + "T12:00:00");
-      return date.toLocaleDateString("en-US", { weekday: "short" });
-    });
-    const chart = lineChart(values, { color: hexColor, labels: shortLabels });
-    if (chart) {
-      lines.push(chart);
-      lines.push("");
-    }
-  } else {
-    const spark = sparkline(values);
-    if (spark) {
-      lines.push("```");
-      lines.push(spark);
-      lines.push("```");
-      lines.push("");
-    }
-  }
+  appendSeriesChart(lines, values, dates, insight.color);
 
   lines.push("| Date | Value |");
   lines.push("|---|---|");
@@ -93,41 +53,18 @@ function trendMarkdown(
 }
 
 export default function Trends() {
-  const dateKey = todayDateKey();
-  const range = useMemo(() => lastNDaysEpoch(7), [dateKey]);
-  const fetcher = useCallback(() => getRange(range.start, range.end), [range]);
-  const { data, stale, loading, missingToken, error, reload } =
-    useMetrics<DailyMetricsRange>(fetcher);
-
-  const refresh = useCallback(async () => {
-    clearRange(range.start, range.end);
-    await reload();
-  }, [range, reload]);
-
-  // Must be above every early return (Rules of Hooks).
-  const sorted = useMemo(
-    () =>
-      data
-        ? [...data].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
-        : [],
-    [data],
-  );
+  const { data, stale, loading, missingToken, error, refresh, sorted } = useDailyRange();
 
   if (missingToken) {
     return <ListStatus variant="missing-token" />;
   }
 
   const metrics = Object.keys(METRIC_LABELS) as MetricName[];
+  const availableMetrics = data ? metrics.filter((m) => sorted.some((d) => d[m] != null)) : [];
 
   return (
-    <List isLoading={loading} isShowingDetail navigationTitle="7-Day Trends">
-      {error && (
-        <ListStatus
-          variant="refresh-failed"
-          itemTitle={error.message.slice(0, 80)}
-          onRefresh={refresh}
-        />
-      )}
+    <List isLoading={loading} isShowingDetail={!loading && availableMetrics.length > 0}>
+      {error && <ListStatus variant="refresh-failed" itemTitle={error.message.slice(0, 80)} onRefresh={refresh} />}
       {stale && (
         <ListStatus
           variant="stale"
@@ -136,53 +73,37 @@ export default function Trends() {
           onRefresh={refresh}
         />
       )}
-      {data && (
+      {!loading && data && availableMetrics.length === 0 && (
+        <List.EmptyView
+          title="No trend data yet"
+          description="Charge and sync your Ring, then refresh."
+          icon={Icon.Cloud}
+          actions={<MetricActions refresh={refresh} />}
+        />
+      )}
+      {availableMetrics.length > 0 && (
         <List.Section title="Metrics">
-          {metrics
-            .filter((m) => sorted.some((d) => d[m] != null))
-            .map((m) => {
-              const values = sorted.map((d) => d[m]);
-              const dates = sorted.map((d) => d.date);
-              const todayValue = values[values.length - 1];
-              const insight = insightFor(m, todayValue, values);
-              const formattedValue = formatMetricValue(m, todayValue);
-              const copyText = `${METRIC_LABELS[m]}: ${formattedValue}`;
+          {availableMetrics.map((m) => {
+            const values = sorted.map((d) => d[m]);
+            const dates = sorted.map((d) => d.date);
+            const todayValue = values[values.length - 1];
+            const insight = insightFor(m, todayValue, values);
+            const formattedValue = formatMetricValue(m, todayValue);
+            const copyText = `${METRIC_LABELS[m]}: ${formattedValue}`;
 
-              return (
-                <List.Item
-                  key={m}
-                  title={METRIC_LABELS[m]}
-                  icon={metricIcon(m, insight.status)}
-                  accessories={[{ text: sparkline(values) }]}
-                  detail={
-                    <List.Item.Detail
-                      markdown={trendMarkdown(m, values, dates, insight)}
-                    />
-                  }
-                  actions={
-                    <ActionPanel>
-                      <Action
-                        title="Refresh"
-                        icon={Icon.ArrowClockwise}
-                        shortcut={{ modifiers: ["cmd"], key: "r" }}
-                        onAction={refresh}
-                      />
-                      <Action
-                        title="Open Preferences"
-                        icon={Icon.Cog}
-                        shortcut={{ modifiers: ["cmd"], key: "," }}
-                        onAction={openExtensionPreferences}
-                      />
-                      <Action.CopyToClipboard
-                        title={`Copy ${METRIC_LABELS[m]}`}
-                        content={copyText}
-                        shortcut={{ modifiers: ["cmd"], key: "c" }}
-                      />
-                    </ActionPanel>
-                  }
-                />
-              );
-            })}
+            return (
+              <List.Item
+                key={m}
+                title={METRIC_LABELS[m]}
+                icon={metricIcon(m, insight.status)}
+                accessories={[{ text: sparkline(values) }]}
+                detail={<List.Item.Detail markdown={trendMarkdown(m, values, dates, insight)} />}
+                actions={
+                  <MetricActions refresh={refresh} copyTitle={`Copy ${METRIC_LABELS[m]}`} copyContent={copyText} />
+                }
+              />
+            );
+          })}
         </List.Section>
       )}
     </List>

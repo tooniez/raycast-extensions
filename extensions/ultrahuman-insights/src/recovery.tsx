@@ -1,19 +1,13 @@
-import {
-  List,
-  ActionPanel,
-  Action,
-  Icon,
-  openExtensionPreferences,
-} from "@raycast/api";
-import { useCallback, useMemo } from "react";
-import { getRange, clearRange } from "./lib/cache";
-import { DailyMetricsRange, MetricName } from "./lib/types";
-import { fmt, lastNDaysEpoch, todayDateKey } from "./lib/format";
-import { useMetrics } from "./lib/use-metrics";
-import { insightFor, deltaVsAverage } from "./lib/insights";
+import { List } from "@raycast/api";
+import { MetricName } from "./lib/types";
+import { fmt, latestWithField } from "./lib/format";
+import { insightFor, deltaVsAverage, avgExcludingIndex, formatDeltaArrow, appendInsightLines } from "./lib/insights";
 import { metricIcon } from "./lib/icons";
 import { lineChart, colorToHex } from "./lib/charts";
+import { weekdayShortLabels } from "./lib/daily-metrics";
 import { ListStatus } from "./lib/status-view";
+import { useDailyRange } from "./lib/use-daily-range";
+import { MetricActions } from "./lib/metric-actions";
 
 interface IndexDef {
   metric: MetricName;
@@ -31,6 +25,7 @@ function indexDetailMarkdown(
   value: number | undefined,
   series: Array<number | undefined>,
   shortLabels: string[],
+  baselineExcludeIndex: number,
 ): string {
   const insight = insightFor(def.metric, value, series);
   const lines: string[] = [];
@@ -40,32 +35,15 @@ function indexDetailMarkdown(
   lines.push(`## ${def.label}`);
   lines.push("");
 
-  if (insight.status !== "neutral" && insight.context) {
-    const statusLine = insight.label
-      ? `**${insight.label}** — ${insight.context}`
-      : insight.context;
-    lines.push(statusLine);
-  }
-  if (insight.recommendation) {
-    lines.push("");
-    lines.push(`**Recommend:** ${insight.recommendation}`);
-  }
+  appendInsightLines(lines, insight);
 
-  // Delta vs 7-day average
-  const delta = deltaVsAverage(value, series, series.length - 1);
+  const delta = deltaVsAverage(value, series, baselineExcludeIndex);
   if (delta && Math.abs(delta.pct) > 1) {
-    const up = delta.delta > 0;
-    const bigMove = Math.abs(delta.pct) > 5;
-    const arrow = up ? (bigMove ? "⏫" : "⬆️") : bigMove ? "⏬" : "⬇️";
-    const sign = delta.delta > 0 ? "+" : "";
-    const deltaStr = `${sign}${Number.isInteger(delta.delta) ? delta.delta : delta.delta.toFixed(1)}`;
+    const { arrow, deltaStr } = formatDeltaArrow(delta);
     lines.push("");
-    lines.push(
-      `${arrow} **${deltaStr}** vs 7-day average (avg: ${delta.avg.toFixed(0)})`,
-    );
+    lines.push(`${arrow} **${deltaStr}** vs 7-day average (avg: ${delta.avg.toFixed(0)})`);
   }
 
-  // Mini line chart (≥3 valid data points)
   const validCount = series.filter((v) => v != null).length;
   if (validCount >= 3) {
     const hexColor = colorToHex(insight.color);
@@ -86,98 +64,55 @@ function indexDetailMarkdown(
 function IndexMetadata({
   value,
   series,
+  baselineExcludeIndex,
 }: {
   value: number | undefined;
   series: Array<number | undefined>;
+  baselineExcludeIndex: number;
 }) {
-  // 7-day avg excluding today (last element)
-  const avg =
-    series.length > 1
-      ? (() => {
-          const base = series
-            .slice(0, -1)
-            .filter((v): v is number => v != null);
-          return base.length > 0
-            ? base.reduce((a, b) => a + b, 0) / base.length
-            : null;
-        })()
-      : null;
-
+  const avg = avgExcludingIndex(series, baselineExcludeIndex);
   const delta = value != null && avg != null ? Math.round(value - avg) : null;
-  const deltaStr =
-    delta != null ? (delta > 0 ? `+${delta}` : String(delta)) : "—";
+  const deltaStr = delta != null ? (delta > 0 ? `+${delta}` : String(delta)) : "—";
 
   return (
     <List.Item.Detail.Metadata>
-      <List.Item.Detail.Metadata.Label
-        title="Score"
-        text={value != null ? String(value) : "—"}
-      />
-      <List.Item.Detail.Metadata.Label
-        title="7-day avg"
-        text={avg != null ? String(Math.round(avg)) : "—"}
-      />
+      <List.Item.Detail.Metadata.Label title="Score" text={value != null ? String(value) : "—"} />
+      <List.Item.Detail.Metadata.Label title="7-day avg" text={avg != null ? String(Math.round(avg)) : "—"} />
       <List.Item.Detail.Metadata.Label title="Today vs avg" text={deltaStr} />
     </List.Item.Detail.Metadata>
   );
 }
 
 export default function Recovery() {
-  const dateKey = todayDateKey();
-  const range = useMemo(() => lastNDaysEpoch(7), [dateKey]);
-  const fetcher = useCallback(() => getRange(range.start, range.end), [range]);
-  const { data, stale, loading, missingToken, error, reload } =
-    useMetrics<DailyMetricsRange>(fetcher);
-
-  const refresh = useCallback(async () => {
-    clearRange(range.start, range.end);
-    await reload();
-  }, [range, reload]);
-
-  // Must be above every early return (Rules of Hooks).
-  const sorted = useMemo(
-    () =>
-      data
-        ? [...data].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
-        : [],
-    [data],
-  );
+  const { data, stale, loading, missingToken, error, refresh, sorted } = useDailyRange();
 
   if (missingToken) {
     return <ListStatus variant="missing-token" />;
   }
   const todayEntry = sorted[sorted.length - 1] ?? null;
 
-  const shortLabels = sorted.map((r) => {
-    if (!r.date) return "";
-    const date = new Date(r.date + "T12:00:00");
-    return date.toLocaleDateString("en-US", { weekday: "short" });
-  });
+  const shortLabels = weekdayShortLabels(sorted.map((r) => r.date));
 
   return (
-    <List
-      isLoading={loading}
-      isShowingDetail={!loading && !!data}
-      navigationTitle="Recovery & Movement"
-    >
-      {error && (
-        <ListStatus
-          variant="refresh-failed"
-          itemTitle={error.message.slice(0, 80)}
-          onRefresh={refresh}
-        />
-      )}
+    <List isLoading={loading} isShowingDetail={!loading && !!data}>
+      {error && <ListStatus variant="refresh-failed" itemTitle={error.message.slice(0, 80)} onRefresh={refresh} />}
       {stale && (
-        <ListStatus
-          variant="stale"
-          itemTitle="Network unreachable — data may be outdated"
-          onRefresh={refresh}
-        />
+        <ListStatus variant="stale" itemTitle="Network unreachable — data may be outdated" onRefresh={refresh} />
       )}
       <List.Section title="Indices">
         {INDICES.map((def) => {
-          const value = todayEntry?.[def.metric];
+          const sleepSource =
+            def.metric === "sleep_score"
+              ? todayEntry?.sleep_score != null
+                ? todayEntry
+                : latestWithField(sorted, "sleep_score")
+              : null;
+          const value = def.metric === "sleep_score" ? sleepSource?.sleep_score : todayEntry?.[def.metric];
           const series = sorted.map((r) => r[def.metric]);
+          const baselineExcludeIndex =
+            def.metric === "sleep_score" && sleepSource
+              ? sorted.findIndex((r) => r.date === sleepSource.date)
+              : series.length - 1;
           const insight = insightFor(def.metric, value, series);
           const copyValue = value != null ? `${def.label}: ${value}` : null;
 
@@ -189,38 +124,11 @@ export default function Recovery() {
               accessories={[{ text: value != null ? String(value) : "—" }]}
               detail={
                 <List.Item.Detail
-                  markdown={indexDetailMarkdown(
-                    def,
-                    value,
-                    series,
-                    shortLabels,
-                  )}
-                  metadata={<IndexMetadata value={value} series={series} />}
+                  markdown={indexDetailMarkdown(def, value, series, shortLabels, baselineExcludeIndex)}
+                  metadata={<IndexMetadata value={value} series={series} baselineExcludeIndex={baselineExcludeIndex} />}
                 />
               }
-              actions={
-                <ActionPanel>
-                  <Action
-                    title="Refresh"
-                    icon={Icon.ArrowClockwise}
-                    shortcut={{ modifiers: ["cmd"], key: "r" }}
-                    onAction={refresh}
-                  />
-                  <Action
-                    title="Open Preferences"
-                    icon={Icon.Cog}
-                    shortcut={{ modifiers: ["cmd"], key: "," }}
-                    onAction={openExtensionPreferences}
-                  />
-                  {copyValue && (
-                    <Action.CopyToClipboard
-                      title={`Copy ${def.label}`}
-                      content={copyValue}
-                      shortcut={{ modifiers: ["cmd"], key: "c" }}
-                    />
-                  )}
-                </ActionPanel>
-              }
+              actions={<MetricActions refresh={refresh} copyTitle={`Copy ${def.label}`} copyContent={copyValue} />}
             />
           );
         })}

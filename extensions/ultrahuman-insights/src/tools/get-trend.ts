@@ -1,4 +1,5 @@
 import { getRange } from "../lib/cache";
+import { assertAiAccess } from "../lib/ai-access";
 import { lastNDaysEpoch, formatMetricValue, today } from "../lib/format";
 import { METRIC_LABELS, MetricName } from "../lib/types";
 
@@ -35,10 +36,9 @@ type Input = {
  * been this week", "show me my recovery over the past 5 days".
  */
 export default async function tool(input: Input) {
+  assertAiAccess();
   if (!VALID_METRICS.includes(input.metric)) {
-    throw new Error(
-      `Unknown metric: "${input.metric}". Valid metrics: ${VALID_METRICS.join(", ")}`,
-    );
+    throw new Error(`Unknown metric: "${input.metric}". Valid metrics: ${VALID_METRICS.join(", ")}`);
   }
   const days = Math.min(7, Math.max(1, input.days ?? 7));
   const { start, end } = lastNDaysEpoch(days);
@@ -51,8 +51,7 @@ export default async function tool(input: Input) {
       return {
         date: d.date,
         value,
-        formatted_value:
-          value != null ? formatMetricValue(input.metric, value) : "—",
+        formatted_value: value != null ? formatMetricValue(input.metric, value) : "—",
       };
     });
 
