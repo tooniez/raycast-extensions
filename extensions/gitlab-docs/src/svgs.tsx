@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, showToast, Toast, LocalStorage, Color } from "@raycast/api";
+import { ActionPanel, Action, Grid, showToast, Toast, LocalStorage, Color } from "@raycast/api";
 import { useState, useEffect } from "react";
 
 // GitLab's icon set (@gitlab/svgs) is previewed at https://design.gitlab.com/svgs/.
@@ -10,15 +10,25 @@ const CACHE_KEY = "GitLabSvgs.sprite";
 
 export default function Command() {
   const { icons, isLoading } = useIcons();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search GitLab icons..." throttle>
-      <List.Section title="Icons" subtitle={icons.length + ""}>
+    <Grid
+      isLoading={isLoading}
+      searchBarPlaceholder="Search GitLab icons..."
+      columns={8}
+      inset={Grid.Inset.Large}
+      onSelectionChange={setSelectedId}
+      navigationTitle={selectedId ? `GitLab Icons – ${selectedId}` : "GitLab Icons"}
+      throttle
+    >
+      <Grid.Section title="Icons" subtitle={icons.length + ""}>
         {icons.map((icon) => (
-          <List.Item
+          <Grid.Item
             key={icon.name}
-            icon={{ source: icon.dataUri, tintColor: Color.PrimaryText }}
-            title={icon.name}
+            id={icon.name}
+            content={{ source: icon.dataUri, tintColor: Color.PrimaryText }}
+            keywords={icon.keywords}
             actions={
               <ActionPanel>
                 <Action.CopyToClipboard title="Copy Icon Name" content={icon.name} />
@@ -31,8 +41,8 @@ export default function Command() {
             }
           />
         ))}
-      </List.Section>
-    </List>
+      </Grid.Section>
+    </Grid>
   );
 }
 
@@ -40,6 +50,7 @@ interface Icon {
   name: string;
   svg: string;
   dataUri: string;
+  keywords: string[];
 }
 
 function useIcons() {
@@ -112,7 +123,12 @@ function parseSprite(sprite: string): Icon[] {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="#000000">${inner}</svg>`;
     const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
-    icons.push({ name, svg, dataUri });
+    // Allow searching with spaces (or no separator) for hyphenated names,
+    // e.g. "chevron lg" or "chevronlg" should match "chevron-lg-left".
+    const parts = name.split(/[-_]/).filter(Boolean);
+    const keywords = Array.from(new Set([...parts, name.replace(/[-_]/g, " "), name.replace(/[-_]/g, "")]));
+
+    icons.push({ name, svg, dataUri, keywords });
   }
 
   icons.sort((a, b) => a.name.localeCompare(b.name));
