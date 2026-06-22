@@ -1,18 +1,26 @@
-import { exec } from "child_process";
-import { showToast, Toast, Alert, confirmAlert } from "@raycast/api";
+import { closeMainWindow, showToast, Toast, Alert, confirmAlert } from "@raycast/api";
 import { showInFinder } from "@raycast/api";
 import path from "path";
 import { loadCategories, categoriesToFileTypes } from "./utils/categories";
-import { analyzeFolder, organizeFolder } from "./utils/file-organizer";
+import { analyzeFolder, OrganizationMode, organizeFolder } from "./utils/file-organizer";
+import { pickFolder } from "./utils/folder-picker";
+import { OrganizationModePicker } from "./utils/organization-mode";
+import { formatSkippedSummary } from "./utils/organization-summary";
 
-export default async function main() {
+export default function Command() {
+  return <OrganizationModePicker onSelect={organizeCustomFolder} />;
+}
+
+async function organizeCustomFolder(mode: OrganizationMode) {
   try {
+    await closeMainWindow();
+
     // Load categories from storage
     const categories = await loadCategories();
     const fileTypes = categoriesToFileTypes(categories);
 
     // Show folder picker dialog
-    const folderPath = await pickFolder();
+    const folderPath = await pickFolder("Select a folder to organize:");
 
     if (!folderPath) {
       await showToast({
@@ -29,7 +37,7 @@ export default async function main() {
       message: `Analyzing files in ${path.basename(folderPath)}`,
     });
 
-    const analysisResult = analyzeFolder(folderPath, fileTypes);
+    const analysisResult = analyzeFolder(folderPath, fileTypes, { mode });
     analysisToast.hide();
 
     if (!analysisResult.success) {
@@ -42,10 +50,12 @@ export default async function main() {
     }
 
     if (analysisResult.total_files === 0) {
+      const skippedProjectCount = analysisResult.skipped_projects?.length || 0;
+      const skippedFolderCount = analysisResult.skipped_folders?.length || 0;
       await showToast({
-        style: Toast.Style.Success,
+        style: skippedFolderCount > 0 ? Toast.Style.Failure : Toast.Style.Success,
         title: "Folder already clean",
-        message: "No files need to be sorted!",
+        message: formatSkippedSummary(skippedProjectCount, skippedFolderCount) || "No files need to be sorted!",
       });
       return;
     }
@@ -61,7 +71,11 @@ export default async function main() {
 
     const confirmed = await confirmAlert({
       title: `Sort ${analysisResult.total_files} files?`,
-      message: `Files in "${path.basename(folderPath)}" will be moved into folders:\n\n${categoryList}`,
+      message: `Files in "${path.basename(folderPath)}" will be moved into folders:\n\n${categoryList}${formatSkippedSummary(
+        analysisResult.skipped_projects?.length || 0,
+        analysisResult.skipped_folders?.length || 0,
+        "\n\n",
+      )}`,
       primaryAction: {
         title: "Sort Files",
         style: Alert.ActionStyle.Destructive,
@@ -87,7 +101,7 @@ export default async function main() {
       message: `Organizing files in ${path.basename(folderPath)}`,
     });
 
-    const sortResult = organizeFolder(folderPath, fileTypes);
+    const sortResult = organizeFolder(folderPath, fileTypes, { mode });
 
     if (!sortResult.success) {
       sortingToast.style = Toast.Style.Failure;
@@ -100,7 +114,11 @@ export default async function main() {
     sortingToast.title = "✅ Folder organized!";
     sortingToast.message = `Sorted ${sortResult.total_moved || 0} files into ${
       sortResult.categories_created?.length || 0
-    } folders`;
+    } folders${formatSkippedSummary(
+      sortResult.skipped_projects?.length || 0,
+      sortResult.skipped_folders?.length || 0,
+      ". ",
+    )}`;
 
     // Offer to open the organized folder
     const openFolder = await confirmAlert({
@@ -126,29 +144,4 @@ export default async function main() {
       message: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
-}
-
-function pickFolder(): Promise<string | null> {
-  return new Promise((resolve, reject) => {
-    const script = `
-      set chosenFolder to choose folder with prompt "Select a folder to organize:"
-      set folderPath to POSIX path of chosenFolder
-      return folderPath
-    `;
-
-    exec(`osascript -e '${script}'`, (error, stdout, stderr) => {
-      if (error) {
-        // User cancelled or error occurred
-        if (error.message.includes("User canceled")) {
-          resolve(null);
-        } else {
-          reject(new Error(stderr || error.message));
-        }
-        return;
-      }
-
-      const folderPath = stdout.trim();
-      resolve(folderPath);
-    });
-  });
 }
