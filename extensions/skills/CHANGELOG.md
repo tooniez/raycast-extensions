@@ -1,5 +1,9 @@
 # Skills Changelog
 
+## [Use Security Audit API] - 2026-06-26
+
+- Use the Skills security audit API instead of parsing audit data from the skills.sh HTML page
+
 ## [Sync Skills Agent IDs] - 2026-06-26
 
 - Sync the local Skills CLI agent ID fallback map with the upstream supported agents list
