@@ -2,7 +2,7 @@
 
 Search and copy TOTP codes from [2FAS](https://2fas.com) exports directly in Raycast. No cloud, no network calls. Your secrets stay local in a Keychain-encrypted vault.
 
-<a href="https://www.raycast.com/Locke/2fas-authenticator"><img src="https://www.raycast.com/Locke/2fas-authenticator/install_button@2x.png" height="64" alt="Install 2FAS Authenticator" style="height: 64px;" /></a>
+<a href="https://www.raycast.com/Lock/2fas-authenticator"><img src="https://www.raycast.com/Lock/2fas-authenticator/install_button@2x.png" height="64" alt="Install 2FAS Authenticator" style="height: 64px;" /></a>
 
 ## Features
 
@@ -26,24 +26,24 @@ Search and copy TOTP codes from [2FAS](https://2fas.com) exports directly in Ray
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| Search OTP | Search all services, copy codes with live countdown |
-| Recent OTP | Access pinned and recently used services |
-| Import Vault | Import a `.2fas` export file |
-| Setup | View vault status and manage configuration |
+| Command      | Description                                         |
+| ------------ | --------------------------------------------------- |
+| Search OTP   | Search all services, copy codes with live countdown |
+| Recent OTP   | Access pinned and recently used services            |
+| Import Vault | Import a `.2fas` export file                        |
+| Setup        | View vault status and manage configuration          |
 
 ## Security Model
 
-| Layer | Detail |
-|-------|--------|
-| Vault key | Random 256-bit key stored in macOS login Keychain via `/usr/bin/security` |
-| Vault file | AES-256-GCM encrypted at `~/Library/Application Support/Raycast/extensions/.../vault.enc` with `0600` permissions |
-| Import | Decrypts `.2fas` in memory (PBKDF2 + AES-256-GCM), re-encrypts into local vault |
-| Secrets at rest | No plaintext secrets on disk. Secrets exist only in memory during runtime |
-| Network | Zero network calls. Everything is offline |
-| Clipboard | Concealed copy. OTP codes are excluded from clipboard history |
-| Dependencies | Zero external crypto dependencies. Node.js `crypto` module only |
+| Layer           | Detail                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Vault key       | Random 256-bit key stored in macOS login Keychain via `/usr/bin/security`                                         |
+| Vault file      | AES-256-GCM encrypted at `~/Library/Application Support/Raycast/extensions/.../vault.enc` with `0600` permissions |
+| Import          | Decrypts `.2fas` in memory (PBKDF2 + AES-256-GCM), re-encrypts into local vault                                   |
+| Secrets at rest | No plaintext secrets on disk. Secrets exist only in memory during runtime                                         |
+| Network         | Zero network calls. Everything is offline                                                                         |
+| Clipboard       | Concealed copy. OTP codes are excluded from clipboard history                                                     |
+| Dependencies    | Zero external crypto dependencies. Node.js `crypto` module only                                                   |
 
 ### Known Limitations
 
@@ -57,8 +57,8 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 ### Development Setup
 
 ```bash
-# Fork and clone the repo
-git clone https://github.com/<your-username>/raycast-2fas-authenticator.git
+# Clone the repo
+git clone https://github.com/LockeAG/raycast-2fas-authenticator.git
 cd raycast-2fas-authenticator
 
 # Install dependencies
@@ -88,6 +88,7 @@ npm run fix-lint
 ### Reporting Bugs
 
 Open an issue with:
+
 - Steps to reproduce
 - Expected vs actual behavior
 - macOS version and Raycast version

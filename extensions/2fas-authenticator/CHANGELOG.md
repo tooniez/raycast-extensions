@@ -1,5 +1,9 @@
 # Changelog
 
+## [Fix Author Attribution] - 2026-07-01
+
+- Correct the extension author handle so it is credited to the right Raycast account
+
 ## [Initial Version] - 2026-06-30
 
 ### Commands
