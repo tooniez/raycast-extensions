@@ -1,5 +1,13 @@
 # Agent Usage Changelog
 
+## [Antigravity CLI support] - 2026-07-02
+
+### Improvements
+
+- Detect the `agy` CLI and `antigravity-cli` installations as a fallback when the Antigravity app is not running
+- Show detailed quota groups (from the `RetrieveUserQuotaSummary` endpoint) for both the app and CLI when the daemon supports it; the menubar reflects the lowest remaining percentage across all buckets, and falls back to the per-model view on older daemons
+- Reorder model display priority to Gemini Pro → Gemini Flash → Claude for both the app and CLI
+
 ## [Add Cursor Usage Provider] - 2026-07-02
 
 ### New Features
